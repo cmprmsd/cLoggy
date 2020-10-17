@@ -1,0 +1,3 @@
+/cLoggy-settings.conf
+/template/*
+!template/.template-marker
