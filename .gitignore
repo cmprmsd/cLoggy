@@ -1,3 +1,4 @@
 /cLoggy-settings.conf
 /template/*
-!template/.template-marker
+!/template/.template-marker
+!/template/markdown-notes
