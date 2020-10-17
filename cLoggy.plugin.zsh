@@ -214,7 +214,7 @@ loadCustomer(){
 		# Setup Firefox alias to use firejail and copy the template
 		if [ $use_customer_templating = 1 ] ; then
 			if [ ! -e $HOME/customer/$customer/.template-marker ]; then
-				cp -ra $customer_dir_template/. $HOME/customer/$customer/
+				cp -ra $customer_dir_template/ $HOME/customer/$customer/
 				mv $HOME/customer/$customer/markdown-notes $HOME/customer/$customer/markdown-$customer # Delete, if you do not use Markdown documentation
 			fi
 			alias firefox="firejail --quiet --private=$HOME/customer/$customer firefox -no-remote 2>/dev/null &;disown"
