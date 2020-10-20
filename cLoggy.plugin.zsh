@@ -290,11 +290,11 @@ startLogging(){
 			mkdir -p $logdir
 	fi
 	logfile=$logdir/tmux_$(date +%F_%T)_PID$$.html
-	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >>! $logfile"
+	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >> $logfile"
 }
 
 restartLogging(){
-	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >>! $logfile"
+	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >> $logfile"
 }
 
 stopLogging(){
