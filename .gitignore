@@ -2,3 +2,5 @@
 /template/*
 !/template/.template-marker
 !/template/markdown-notes
+cLoggy.plugin.zsh.zwc
+cLoggy.plugin.zsh.zwc.old
