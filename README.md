@@ -65,6 +65,8 @@ Change the background for your shell and for each of your customer (persistent):
 
 ## Installation
 
+### oh my zsh (https://github.com/ohmyzsh/ohmyzsh)
+
 1. `cd .oh-my-zsh/plugins`
 
 2. `git clone https://github.com/H8to/cLoggy`
@@ -83,12 +85,42 @@ Change the background for your shell and for each of your customer (persistent):
      TERM=screen-256color exec tmux
    fi
    ```
+	**Notice:** Some terminals display the colors only the correct way with just `exec tmux` instead of `TERM=screen-256color exec tmux`. For mine it is the other way around.
 
 5. Execute `zsh`
 
-6. Recommended: Enable incremental logging rather than waiting for the shell to exit. 
+6. *Highly Recommended:* Configure incremental logging rather than waiting for the shell to exit. This seems not to be default in newer versions of oh-my-zsh any more but is a must in order to switch between customers at any time.
 
    `setopt INC_APPEND_HISTORY`
+
+### zimfw (https://github.com/zimfw/zimfw)
+
+1. Edit `~/.zimrc`
+
+   ```sh
+   # cLoggy
+   zmodule https://github.com/H8to/cLoggy -b main
+   ```
+
+   **Notice:** `cLoggy` has to be placed behind `zmodule completion ` as it depends on `defcomp`.
+
+2. ```sh
+   zimfw install
+   ```
+
+3. Edit `.zshrc` config file to enable tmux
+
+   ```sh
+   # add near the top of your configuration
+   if [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]] && [ -z "$TMUX" ]; then
+     TERM=screen-256color exec tmux
+   fi
+   ```
+
+   **Notice:** Some terminals display the colors only the correct way with just `exec tmux` instead of `TERM=screen-256color exec tmux`. For mine it is the other way around.
+
+4. Restart your terminal
+
 
 ## Usage
 
@@ -100,7 +132,7 @@ sc CustomerA
 setCustomer CustomerA
 ```
 The `setCustomer` command changes the current customer and uses the tmux pipe-pane functionality to write a logfile to `~/customer/[customer]/logs/`. If the user does not exist it will be created on the fly.
-If `motd_enabled` is set cLoggy will show the currently active customer on each new terminal session in addition to the network information. 
+If `motd_enabled` is set cLoggy will show the currently active customer on each new terminal session in addition to the network information.
 
 **Leave any customer environment:**
 
@@ -228,4 +260,3 @@ zsh -c tmux
 | Alias | Command                                              | Description                                                  |
 | ----- | ---------------------------------------------------- | ------------------------------------------------------------ |
 | note  | `typora $HOME/customer/$customer/markdown-$customer` | Open Typora in the currently active customer markdown project folder. |
-

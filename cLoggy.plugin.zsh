@@ -11,12 +11,12 @@
 alias sc=setCustomer # set persistent customer
 alias tc=tempCustomer # set temporary customer
 alias co=pickColor # set new color alias
-alias cl='echo $(date "+%Y-%m-%d-%H%M")-SH: ${1} >> $HOME/customer/$customer/timeline.log'
+alias cl='echo $(date "+%Y-%m-%d-%H%M")-SH: ${1} >>! $HOME/customer/$customer/timeline.log'
 alias cc='cd $HOME/customer/$customer/' # switch to the current customer "home" folder
 alias cs="clear;loadModt" # clear screen
 alias delcu="deleteCustomer"
 here(){ cat "$HOME/.zsh_history.d/$PWD/history"; } # per folder history
-hist() { stopLogging && GREP_COLOR='00;38;5;226' grep --color=always -i $1 ~/customer/**/.history ~/.zsh_history ; restartLogging; } # search all history files and grep them (usage hist <searchterm>) ## ** is used to not follow the currentCustomer link
+hist() { stopLogging && GREP_COLOR='00;38;5;226' grep --color=always -i $1 $HOME/customer/**/.history $HOME/.zsh_history ; restartLogging; } # search all history files and grep them (usage hist <searchterm>) ## ** is used to not follow the currentCustomer link
 
 ## firejail
 alias fireEditTemplate='firejail --quiet --private=$customer_dir_template firefox -no-remote 2>/dev/null &;disown' # Used to edit the template (add new certificates e.g.)
@@ -30,18 +30,17 @@ f(){ctask add "file://${@}"} # Add a reflink to e.g. documentation (task rc.data
 ## Typora
 alias note='typora $HOME/customer/$customer/markdown-$customer'
 
-
 ### Functions ###
 
 deleteCustomer(){
 	delCust=${1// /_}
 	delCust=${delCust//[^a-zA-Z0-9_\-]/}
 	if [ -n "$delCust" ]; then
-		echo "Delete ~/customer/${delCust}?"
+		echo "Delete $HOME/customer/${delCust}?"
 		yn=""
 		vared -p "[y/n]?" -c yn
 	    case $yn in
-	        [Yy]* ) rm -r ~/customer/${delCust};;
+	        [Yy]* ) rm -r $HOME/customer/${delCust};;
 	        [Nn]* ) ;;
 	        * ) echo "Wrong input.";;
 	    esac
@@ -66,9 +65,9 @@ pickColor(){
 		newColor=$(grim -g "$(slurp -p)" - -t png -o | convert png:- -format '%[pixel:s]\n' info:- | awk -F '[(,)]' '{printf("#%02x%02x%02x\n",$2,$3,$4)}')
 		if [ -n "$newColor" ]; then
 			if [ -n "$customer" ]; then
-				echo $newColor > ~/customer/$customer/.bgcolor && loadColor 2>&1
+				echo $newColor >! $HOME/customer/$customer/.bgcolor && loadColor 2>&1
 			else
-				echo $newColor > ~/.bgcolor && loadColor 2>&1
+				echo $newColor >! $HOME/.bgcolor && loadColor 2>&1
 			fi
 		fi
 	else
@@ -79,7 +78,7 @@ pickColor(){
 				newColor=$(grabc)
 				if [ -n "$newColor" ]; then
 					if [ -n "$customer" ]; then
-						echo $newColor > ~/customer/$customer/.bgcolor && loadColor 2>&1
+						echo $newColor >! $HOME/customer/$customer/.bgcolor && loadColor 2>&1
 					else
 						noncustomer_bg_color=$newColor
 						sed -i "s/noncustomer_bg_color\=\#.*$/noncustomer_bg_color\=$newColor/g" $ZSH/plugins/cLoggy/cLoggy-settings.conf && loadColor
@@ -140,14 +139,14 @@ _cLoggy () {
 	compadd -V letters `_cLoggy_getCustomerList`
 }
 #	zstyle ':completion:*' file-sort modification
-#	_files -/ -W ~/customer -F "^currentCustomer$" -I "/"
+#	_files -/ -W $HOME/customer -F "^currentCustomer$" -I "/"
 #} # This part was a workaround for modification time sorting of the customers
 
 _cLoggy_getCustomerList () {
-	#ls -t ~/customer | grep -v # This parses all customer folders and returns it as auto completion for zsh
+	#ls -t $HOME/customer | grep -v # This parses all customer folders and returns it as auto completion for zsh
 	# The following is the madness that removes the currentCustomer symlink from
 	# the results, while maintaining the mtime sort
-	find ~/customer -mindepth 1 -maxdepth 1 -type d -printf '%T@ %P\n' | sort -k 1 -nr | cut -d' ' -f2
+	find $HOME/customer -mindepth 1 -maxdepth 1 -type d -printf '%T@ %P\n' | sort -k 1 -nr | cut -d' ' -f2
 }
 
 setCustomer(){
@@ -155,7 +154,7 @@ setCustomer(){
 	# that's not alphanumeric a dash or an underscore
 	CLEAN=${1// /_}
 	CLEAN=${CLEAN//[^a-zA-Z0-9_\-]/}
-	echo "$CLEAN" > ~/.customer
+	echo "$CLEAN" >! $HOME/.customer
 	customer=$CLEAN
 	if [ -n "$1" ]; then
 		logdir=$HOME/customer/$customer/logs # Workaround! To be fixed in the app flow later on
@@ -164,6 +163,19 @@ setCustomer(){
 		fi
 		cd $HOME/customer/$customer/ # This shall make sure that on customer change the
 																 # path will be changed regardless of the current working dir
+																 # Create currentCustomer symlink
+
+		# Check if the permanent customer (file) has been changed in order to change
+		# the symlink only on a different customer. If not tested against, tools like the file browser exit the currentCustomer
+		# folder on the creation of a new terminal window.
+		if [ -L  $HOME/customer/currentCustomer ] ; then
+			if [ $(basename $(readlink $HOME/customer/currentCustomer)) != $(cat $HOME/.customer) ]; then
+				rm $HOME/customer/currentCustomer 2>/dev/null
+				ln -s $HOME/customer/$customer $HOME/customer/currentCustomer 2>&1
+			fi
+		else
+			ln -s $HOME/customer/$customer $HOME/customer/currentCustomer 2>&1
+		fi
 		loadCustomer
 	else
 		cd
@@ -193,7 +205,7 @@ tempCustomer(){
 
 # Switch back to the last permanent customer
 cback(){
-	export customer=$(cat ~/.customer)
+	export customer=$(cat $HOME/.customer)
 	cd $HOME/customer/$customer/
 	loadCustomer
 }
@@ -223,30 +235,18 @@ loadCustomer(){
 		# Setup Firefox alias to use firejail and copy the template
 		if [ $use_customer_templating = 1 ] ; then
 			if [ ! -e $HOME/customer/$customer/.template-marker ]; then
-				cp -ra $customer_dir_template/ $HOME/customer/$customer/
+				cp -ra $customer_dir_template/. $HOME/customer/$customer/
 				mv $HOME/customer/$customer/markdown-notes $HOME/customer/$customer/markdown-$customer # Delete, if you do not use Markdown documentation
 			fi
 			alias firefox="firejail --quiet --private=$HOME/customer/$customer firefox -no-remote 2>/dev/null &;disown"
 		fi
-	fi
-	# Create currentCustomer symlink
-	# Also check if the permanent customer (file) has been changed in order to change
-	# the symlink only on change. If not tested against, tools like the file browser exit the currentCustomer
-	# folder on the creation of a new terminal window.
-	if [ -L  ~/customer/currentCustomer ] ; then
-		if [ $(basename $(readlink ~/customer/currentCustomer)) != $(cat ~/.customer) ]; then
-			rm ~/customer/currentCustomer 2>/dev/null
-			ln -s ~/customer/$customer ~/customer/currentCustomer 2>&1
-		fi
-	else
-		ln -s ~/customer/$customer ~/customer/currentCustomer 2>&1
 	fi
 	softStartTerminal
 }
 
 unloadCustomer(){
 	if [ "$customer_zsh_history" = 1 ] ; then
-		fc -p ~/.zsh_history
+		fc -p $HOME/.zsh_history
 	fi
 	unalias cc 2>/dev/null
 	unalias ctask 2>/dev/null
@@ -254,7 +254,7 @@ unloadCustomer(){
 	stopLogging
 	#cd moved to the command itself. Else it is even triggered when the Nemo function "Open Terminal here" is used.
 	unset customer
-	rm ~/customer/currentCustomer 2>/dev/null
+	rm $HOME/customer/currentCustomer 2>/dev/null
 	softStartTerminal
 }
 
@@ -263,7 +263,7 @@ loadTimeStamps(){
 		if [ "$use_per_folder_history" = 1 ] ; then
 			if [[ ! "$1" =~ "^here.*" && "$1" != "zsh" ]]; then # exclude any occurence of here and here with grep pipes (here | grep word)
 				mkdir -p "$HOME/.zsh_history.d/$PWD/"
-				echo $1 >> "$HOME/.zsh_history.d/$PWD/history"
+				echo $1 >>! "$HOME/.zsh_history.d/$PWD/history"
 			fi
 		fi
 		DATE=$( date +"Begin [%Y-%m-%d %H:%M:%S]" )
@@ -290,11 +290,11 @@ startLogging(){
 			mkdir -p $logdir
 	fi
 	logfile=$logdir/tmux_$(date +%F_%T)_PID$$.html
-	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >> $logfile"
+	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >>! $logfile"
 }
 
 restartLogging(){
-	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >> $logfile"
+	tmux pipe-pane "exec cat - | ansifilter --html --font monospace | sed -u 's/^.*End/\%   End/g' >>! $logfile"
 }
 
 stopLogging(){
@@ -308,7 +308,7 @@ loadModt(){
 		echo "$fg[red]Not logging - No customer set..$fg[default]"
 	fi
 	if [ "$motd_enabled" = 1 ]; then
-		echo "Uptime: ${fg[${ZSH_HOST_COLOR}]}$(uptime -p)"
+		echo "Uptime: $(uptime -p)"
 		echo "Networks:\n$(ip -brief -color -4  a | grep -v UNKNOWN)"
 		if ext="$(curl -4 https://my.h8.to/ -m 1 2>/dev/null)"; then
 			echo "External IP:\t $fg[green]UP\t\t\033[35m${ext} $fg[default]GW:\033[35m $(ip r | grep default | cut -f3 -d' ' | head -1)$fg[default] ($(ip r | grep default | cut -f5 -d' ' | head -1))"
