@@ -10,7 +10,7 @@
 * Each customer will have a separate `taskwarrior` instance called **ctask**. With this alias you can manage per customer tasks while using **task** for global taskwarrior tasks.
 * For each customer its own history can be created. While within a customer environment, all commands are written to `~/customer/[customer]/.history`. With `hist` you can search through all customer history files at once (similar to history).
 
-Most features are opt-out. You can configure them in the configuration file `.oh-my-zsh/plugins/cLoggy/cLoggy-settings.conf`, which will be created on the first start with the plugin activated.
+Most features are opt-out. You can configure them in the configuration file `~/.config/cLoggy/cLoggy-settings.conf`, which will be created on the first start with cLoggy enabled.
 
 The customer folder structure looks like the following:
 
@@ -143,7 +143,9 @@ The huge benefit you get with this, is that each customer will have a clean envi
 
 ### Templating
 
-If `$use_customer_templating` is set your configured template folder from `$customer_dir_template` is copied to each new customer folder. In order to overwrite it again you can delete the file `<customer>/.template-marker `, which indicates that the template has already been copied.
+If `$use_customer_templating` is set your configured template folder from `$customer_dir_template` is copied to each new customer folder. In order to overwrite it again you can delete the file `<customer>/.template-marker ` that indicates that the template has already been copied.
+
+On the first start of cLoggy the template folder and the configuration will be created into `~/.config/cLoggy/`. 
 
 ### Permanent and Temporary Customer
 

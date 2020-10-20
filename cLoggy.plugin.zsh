@@ -51,6 +51,14 @@ deleteCustomer(){
 	fi
 }
 
+### Move Template ###
+cLoggy_moveTemplate(){
+	if [ ! -e $HOME/.config/cLoggy/template/.template-marker ]; then
+		# Copy the template folder from the plugin/module folder to ~/.config/cLoggy/ for better compability and portability
+		cp -ra ${0:a:h}/template/ $HOME/.config/cLoggy/template/
+	fi
+}
+
 # Change the background color for the currently active customer
 pickColor(){
 	if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
@@ -86,21 +94,22 @@ pickColor(){
 }
 
 # Create configuration file
-checkConfig() {
-	if [ ! -s "$HOME/.oh-my-zsh/plugins/cLoggy/cLoggy-settings.conf" ]; then
-		cat > $HOME/.oh-my-zsh/plugins/cLoggy/cLoggy-settings.conf <<EOL
+cLoggy_checkConfig() {
+	if [ ! -s "$HOME/.config/cLoggy/cLoggy-settings.conf" ]; then
+		mkdir -p $HOME/.config/cLoggy/
+		cat > $HOME/.config/cLoggy/cLoggy-settings.conf <<EOL
 		############## Config ###############
 		# startEndTimeWithoutCustomer defines if date pattern ([2017-01-05 12:00:00])
 		# is always shown or only when a customer is set.
 		startEndTimeWithoutCustomer=1
 		# Define ctask as customer bound taskwarrior alias
 		integrate_ctask=1
-		# Make use of the customer template folder. It is located under $ZSH/plugins/cLoggy/template/.
+		# Make use of the customer template folder. It is located under $HOME/.config/cLoggy/template/.
 		# You can also configure the Firefox pseudo jail (with the command fireEditTemplate)
 		use_customer_templating=1
 		# Modify to define your own customer template folder. All data from here
 		# will be copied into each customer folder during customer creation (once).
-		customer_dir_template="$ZSH/plugins/cLoggy/template"
+		customer_dir_template="$HOME/.config/cLoggy/template/"
 		# Show Motd
 		motd_enabled=1
 		# Per customer zsh history
@@ -115,11 +124,11 @@ checkConfig() {
 		noncustomer_bg_color=#1e1e1e
 EOL
 	fi
-	source $HOME/.oh-my-zsh/plugins/cLoggy/cLoggy-settings.conf
-	mkdir -p ~/customer
-	touch ~/.customer
+	source $HOME/.config/cLoggy/cLoggy-settings.conf
+	mkdir -p $HOME/customer
+	touch $HOME/.customer
 	if [ -z "$customer" ]; then
-		export customer=$(cat ~/.customer)
+		export customer=$(cat $HOME/.customer)
 	fi
 }
 
@@ -374,12 +383,14 @@ echoColors(){
 }
 
 ### Flow ###
-checkConfig
+cLoggy_checkConfig
+cLoggy_moveTemplate
 if [ -n "$customer" ]; then
 	loadCustomer
 else
 	unloadCustomer
 fi
+
 if [ $startEndTimeWithoutCustomer = 1 -o -n "$customer" ] ; then
 	loadTimeStamps
 fi
