@@ -54,7 +54,7 @@ deleteCustomer(){
 cLoggy_moveTemplate(){
 	if [ ! -e $HOME/.config/cLoggy/template/.template-marker ]; then
 		# Copy the template folder from the plugin/module folder to ~/.config/cLoggy/ for better compability and portability
-		cp -ra ${0:a:h}/template/ $HOME/.config/cLoggy/template/
+		[[ $ZSH ]] && cp -ra $ZSH/plugins/cLoggy/template/ $HOME/.config/cLoggy/template/ || cp -ra ${0:a:h}/template/ $HOME/.config/cLoggy/template/
 	fi
 }
 
