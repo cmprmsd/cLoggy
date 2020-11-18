@@ -28,7 +28,7 @@ alias d="ctask del" # quick del a task
 f(){ctask add "file://${@}"} # Add a reflink to e.g. documentation (task rc.data.location=$HOME/customer/$customer/ctask 2>/dev/null add)
 
 ## Typora
-alias note='typora $HOME/customer/$customer/markdown-$customer'
+alias note='typora $HOME/customer/$customer/markdown-$customer & disown'
 
 ### Functions ###
 
