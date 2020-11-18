@@ -310,7 +310,7 @@ loadModt(){
 	if [ "$motd_enabled" = 1 ]; then
 		echo "Uptime: $(uptime -p)"
 		echo "Networks:\n$(ip -brief -color -4  a | grep -v UNKNOWN)"
-		if ext="$(curl -4 https://my.h8.to/ -m 1 2>/dev/null)"; then
+		if ext="$(curl --connect-timeout 1 -m 1 -4 https://my.h8.to/ 2>/dev/null)"; then
 			echo "External IP:\t $fg[green]UP\t\t\033[35m${ext} $fg[default]GW:\033[35m $(ip r | grep default | cut -f3 -d' ' | head -1)$fg[default] ($(ip r | grep default | cut -f5 -d' ' | head -1))"
 		else
 			echo "External IP:\t $fg[red]DOWN$fg[default]\t        \033[35mProxy or Offline$fg[default]"
